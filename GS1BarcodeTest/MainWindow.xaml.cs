@@ -22,7 +22,7 @@ namespace GS1BarcodeTest
     /// </summary>
     public partial class MainWindow : Window
     {
-        
+
         public MainWindow()
         {
             InitializeComponent();
@@ -31,24 +31,35 @@ namespace GS1BarcodeTest
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             string DatenbezeichnerGLN = "01";
+            string DatenbezeichnerNVE = "00";
             string DatenbezeichnerProduktionsdatum = "11";
             string DatenbezeichnerChargenNummer = "10";
+            string DatenbezeichnerMHD = "15";
+            string DatenbezeichnerMenge = "37";
             string Datenbezeichner = "00";
-            string GLN = "4013493000002";
+            string DatenbezeichernGTIN = "02";
+            string EANGTIN = "4260046693352";
             string GLNBasis = "4013493";
-            string Reserveziffer = "1";
+            string Reserveziffer = "3";
+            string GLN = "4013493000002";
             string Produktionsdatum = "311218";
-            string ChargenNummer = "151218";
-            string NVEDaten = "000000001";
-            string Barcode1 = DatenbezeichnerGLN + GLN + DatenbezeichnerProduktionsdatum + Produktionsdatum + DatenbezeichnerChargenNummer + ChargenNummer;
+            string VarNummer = "000000001";
+            string ChargenNummer = "181231";
+            string Menge = "0095";
+            string MHD = "190131";
 
-            string NVERoh = Reserveziffer + GLNBasis + NVEDaten;
-            int NVERohdatenINT = Int32.Parse(NVERoh);
-            int Prüfziffer = PrüfzifferBerechnen(NVERohdatenINT);
+            string NVERohdaten = Reserveziffer + GLNBasis + VarNummer;
+            string Barcode1 = DatenbezeichernGTIN + EANGTIN + DatenbezeichnerMHD + MHD + DatenbezeichnerMenge + Menge;
+            string Barcode2 = DatenbezeichnerNVE + NVERohdaten + PrüfzifferBerechnen(NVERohdaten) + DatenbezeichnerChargenNummer + ChargenNummer;
 
-            
+            //int NVERohdatenINT = Int32.Parse(NVERoh);
+            //int Prüfziffer = PrüfzifferBerechnen(NVERohdatenINT);
+
+
             BarcodeLib.Barcode b = new BarcodeLib.Barcode();
             System.Drawing.Image img = b.Encode(BarcodeLib.TYPE.CODE128, Barcode1, System.Drawing.Color.Black, System.Drawing.Color.White, 800, 240);
+            System.Drawing.Image img2 = b.Encode(BarcodeLib.TYPE.CODE128, Barcode2, System.Drawing.Color.Black, System.Drawing.Color.White, 800, 240);
+            BarcodeIMG2.Source = ToWpfImage(img2);
             BarcodeIMG.Source = ToWpfImage(img);
         }
 
@@ -64,10 +75,35 @@ namespace GS1BarcodeTest
             ix.EndInit();
             return ix;
         }
-        public int PrüfzifferBerechnen(int[] NVERohdaten)
+        public int PrüfzifferBerechnen(string NVERohdaten)
         {
+            char[] arrayIteration = NVERohdaten.ToArray();
+            
+            int Produktsumme = 0;
+            foreach (char i in arrayIteration)
+            {
+                int Zahl = Convert.ToInt32(char.GetNumericValue(i));
+                if (istGerade(Zahl))
+                {
+                    Produktsumme = Produktsumme + Zahl * 3;
+                    // * 3 Rechnen laut GS1 Standard
+                }
+                else
+                {
+                    Produktsumme = Produktsumme + Zahl * 1;
+                }
+               
 
-            return 0;
+            }
+            double Modul = Produktsumme / 10.0;
+            //Modulo 10 Berechnung Gemäß GS1 STandart; 
+            int Zwischensumme = Convert.ToInt32(Math.Ceiling(Modul));
+            int ReturnValue = (Zwischensumme * 10) - Produktsumme;
+            return ReturnValue;
+        }
+        private bool istGerade(int Zahl)
+        {
+            return Zahl % 2 == 0;
         }
 
     }
